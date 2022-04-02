@@ -14,7 +14,9 @@ class SETree:
 
     def add_tail_sets(self, dsg):
         dsg_keys = list(dsg.keys())
-        self.tail_sets = dsg_keys[self.point_index+1:]
+        for point in dsg_keys:
+            if dsg[point].point_index > self.point_index:
+                self.tail_sets.append(point)
 
     def __str__(self):
         return str({
@@ -30,12 +32,17 @@ class GSkylineGroup:
         self.group_size = group_size
         self.unit_group = {}
         self.skyline_groups = []
+        self.temp_groups = []
 
     def create_unit_group(self):
         for point_key in list(self.dsg):
             unit_group = self.dsg[point_key].parents + \
                 [point_key]
             if len(unit_group) >= self.group_size:
+                if len(unit_group) == self.group_size:
+                    sg = SETree(unit_group, self.group_size,
+                                self.dsg, self.dsg[point_key].point_index)
+                    self.temp_groups.append(sg)
                 del self.dsg[point_key]
             else:
                 self.unit_group[point_key] = unit_group
@@ -78,6 +85,14 @@ class GSkylineGroup:
                             self.skyline_groups.append([])
                         self.skyline_groups[i].append(sg)
 
+        if len(self.skyline_groups) == self.group_size:
+            self.skyline_groups[self.group_size-1].extend(self.temp_groups)
+        elif len(self.skyline_groups) == self.group_size - 1:
+            self.skyline_groups.append(self.temp_groups)
+        else:
+            self.skyline_groups[len(self.skyline_groups) -
+                                1].extend(self.temp_groups)
+
 
 if __name__ == "__main__":
     points = sorted(points, key=itemgetter(0))
@@ -88,6 +103,8 @@ if __name__ == "__main__":
     sg = GSkylineGroup(
         skyline_graph.graph, skyline_graph.max_layer)
     sg.processing()
-    for i in sg.skyline_groups:
-        for j in i:
-            print(j)
+    total = 0
+    for i in sg.skyline_groups[skyline_graph.max_layer]:
+        print(i)
+        total += 1
+    print(total)
