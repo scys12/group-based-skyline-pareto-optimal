@@ -1,5 +1,3 @@
-from operator import itemgetter
-from skyline_layers import points, SkylineLayer
 from skyline import Skyline
 
 
@@ -44,14 +42,3 @@ class SkylineGraph:
                             self.graph[key].children.append(self.layers[i][j])
                 key = tuple(self.layers[i][j])
                 self.graph[key] = dsg
-
-
-if __name__ == "__main__":
-    points = sorted(points, key=itemgetter(0))
-    skyline_layer = SkylineLayer(points)
-    skyline_layer.processing()
-    skyline_graph = SkylineGraph(skyline_layer.layers, skyline_layer.max_layer)
-    skyline_graph.processing()
-    for x in skyline_graph.graph:
-        print(f"key {x}")
-        print(f"val {skyline_graph.graph[x]}")

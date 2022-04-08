@@ -1,9 +1,3 @@
-from audioop import reverse
-from operator import itemgetter
-from skyline_layers import points, SkylineLayer
-from directed_skyline_graph import SkylineGraph
-
-
 class SETree:
     def __init__(self, ug, points, level, dsg, point_index=-1, unit_groups=None) -> None:
         self.unit_groups = ug
@@ -111,19 +105,3 @@ class GSkylineGroup:
 
                     self.skyline_groups[i-1].remove(candidate_group)
                 i += 1
-
-
-if __name__ == "__main__":
-    points = sorted(points, key=itemgetter(0))
-    skyline_layer = SkylineLayer(points)
-    skyline_layer.processing()
-    skyline_graph = SkylineGraph(skyline_layer.layers, skyline_layer.max_layer)
-    skyline_graph.processing()
-    sg = GSkylineGroup(
-        skyline_graph.graph, skyline_graph.max_layer)
-    sg.processing()
-    total = 0
-    for i in sg.temp_groups:
-        print(i)
-        total += 1
-    print(total)

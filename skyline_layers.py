@@ -1,4 +1,3 @@
-from operator import itemgetter
 from skyline import Skyline
 
 
@@ -59,26 +58,3 @@ class SkylineLayer:
                 return self.binary_search(tail_point, point, current_layer + 1, high)
         else:
             return -1
-
-
-points = [
-    [4, 400],
-    [24, 380],
-    [14, 340],
-    [36, 300],
-    [26, 280],
-    [8, 260],
-    [40, 200],
-    [20, 180],
-    [34, 140],
-    [28, 120],
-    [16, 60],
-]
-
-if __name__ == "__main__":
-    points = sorted(points, key=itemgetter(0))
-    skyline_layer = SkylineLayer(points)
-    skyline_layer.processing()
-    for x in skyline_layer.points:
-        print(x)
-    print(skyline_layer.layers)

@@ -92,19 +92,3 @@ class GSkylineGroup:
         else:
             self.skyline_groups[len(self.skyline_groups) -
                                 1].extend(self.temp_groups)
-
-
-if __name__ == "__main__":
-    points = sorted(points, key=itemgetter(0))
-    skyline_layer = SkylineLayer(points)
-    skyline_layer.processing()
-    skyline_graph = SkylineGraph(skyline_layer.layers, skyline_layer.max_layer)
-    skyline_graph.processing()
-    sg = GSkylineGroup(
-        skyline_graph.graph, skyline_graph.max_layer)
-    sg.processing()
-    total = 0
-    for i in sg.skyline_groups[skyline_graph.max_layer]:
-        print(i)
-        total += 1
-    print(total)
