@@ -1,5 +1,7 @@
 from operator import itemgetter
-from topkgp import TopKSkylineGroupsDominatedPoints
+from top_k_group_dominated_groups import TopKSkylineGroupsDominatedGroups
+from util import RepresentativeSkylineGraph
+from top_k_group_dominated_points import TopKSkylineGroupsDominatedPoints
 from skyline_layers import SkylineLayer
 from directed_skyline_graph import SkylineGraph
 
@@ -33,9 +35,16 @@ if __name__ == "__main__":
         print(f"key {x}")
         print(f"val {skyline_graph.graph[x]}")
 
-    print("\n---- Top K Skyline Group ----")
+    print("\n---- Top K Skyline Group Dominated Points ----")
     topkgp = TopKSkylineGroupsDominatedPoints(
-        skyline_graph.graph, 3, skyline_layer.layers, 4)
+        skyline_graph.graph, 2, skyline_layer.layers, 4)
     topkgp.processing()
     for group in topkgp.skyline_groups:
-        print(group)
+        print(list(group))
+
+    print("\n---- Top K Skyline Group Dominated Groups ----")
+    topkgp = TopKSkylineGroupsDominatedGroups(
+        skyline_graph.graph, 2, skyline_layer.layers, 2)
+    topkgp.processing()
+    for group in topkgp.skyline_groups:
+        print(list(group))

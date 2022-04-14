@@ -29,3 +29,32 @@ def reverse_bisort(a, x, lo=0, hi=None):
         else:
             lo = mid+1
     return lo
+
+
+class RepresentativeSkylineGraph:
+    def __init__(self, dsg, group) -> None:
+        self.dsg = dsg
+        self.group = group
+        self.graph = {}
+
+        self.merge_child_in_graph(self.group)
+
+    def merge_child_in_graph(self, group):
+        for parent_point in group:
+            children_set = [parent_point] + self.dsg[parent_point].children
+            for child_point in list(children_set):
+                if self.check_point_have_one_parent_in_group(self.group, child_point) and child_point not in self.group:
+                    self.graph[parent_point]['weight'] += 1
+                    children_set.remove(child_point)
+                else:
+                    if child_point not in self.graph:
+                        self.graph[child_point] = {
+                            'weight': 1,
+                            'children_set': []
+                        }
+            self.graph[parent_point]['children_set'] += children_set
+
+    def check_point_have_one_parent_in_group(self, group, point):
+        parents = self.dsg[point].parents
+        parent_points = set(group).intersection(set(parents))
+        return len(parent_points) == 1

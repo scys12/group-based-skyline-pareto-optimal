@@ -54,6 +54,20 @@ class TopKSkylineGroupsDominatedPoints:
         self.points_of_max_layer.sort(
             key=lambda point: dominated_points_of_point[point], reverse=True)
 
+    def create_child_skyline_group(self, candidate_groups, parent_group, dp_parent_group):
+        children_set = set()
+        for point in parent_group:
+            children_set.update(self.get_children_set(point))
+
+        child_groups = create_subset(children_set, self.group_size)
+        child_groups = [x for x in child_groups if not any(
+            [set(y).issubset(set(x)) for y in candidate_groups])]
+
+        for group in list(child_groups):
+            if self.get_dominated_points_of_group(group) > dp_parent_group:
+                child_groups.remove(group)
+        return child_groups
+
     def processing(self):
         self.sort_points_of_max_layer()
 
@@ -73,7 +87,6 @@ class TopKSkylineGroupsDominatedPoints:
         candidate_groups.sort(
             key=lambda group: self.dominated_points_of_group[group], reverse=True)
         temp = self.dominated_points_of_group[candidate_groups[self.k-1]]
-
         new_groups = new_groups[self.k:]
         for group in new_groups:
             if self.upper_dominated_points[group] > temp:
@@ -87,11 +100,12 @@ class TopKSkylineGroupsDominatedPoints:
                     del self.dominated_points_of_group[candidate_groups[self.k]]
                     candidate_groups = candidate_groups[:self.k]
                     temp = self.dominated_points_of_group[candidate_groups[self.k-1]]
-
         g_first = candidate_groups[0]
-        while self.get_dominated_points_of_group(g_first) > temp + 1:
-            self.group_flag.append(group)
-            child_groups = create_subset(g_first, self.group_size)
+        dpg_g_first = self.get_dominated_points_of_group(g_first)
+        while dpg_g_first > temp + 1:
+            self.group_flag.append(g_first)
+            child_groups = self.create_child_skyline_group(
+                candidate_groups, g_first, dpg_g_first)
             for group in child_groups:
                 udp = self.get_upper_bound_dominated_points(group)
                 if udp > temp:
@@ -108,6 +122,7 @@ class TopKSkylineGroupsDominatedPoints:
             for group in candidate_groups:
                 if group not in self.group_flag:
                     g_first = group
+                    dpg_g_first = self.get_dominated_points_of_group(g_first)
                     break
 
         self.skyline_groups = candidate_groups
