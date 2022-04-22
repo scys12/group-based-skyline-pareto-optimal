@@ -59,7 +59,7 @@ class TopKSkylineGroupsDominatedPoints:
         for point in parent_group:
             children_set.update(self.get_children_set(point))
 
-        child_groups = create_subset(children_set, self.group_size)
+        child_groups = create_subset(children_set, -1, self.group_size)
         child_groups = [x for x in child_groups if not any(
             [set(y).issubset(set(x)) for y in candidate_groups])]
 
@@ -72,7 +72,7 @@ class TopKSkylineGroupsDominatedPoints:
         self.sort_points_of_max_layer()
 
         new_groups = list(create_subset(
-            self.points_of_max_layer, self.group_size))
+            self.points_of_max_layer, -1, self.group_size))
         for group in new_groups:
             self.upper_dominated_points[group] = self.get_upper_bound_dominated_points(
                 group)

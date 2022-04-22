@@ -25,8 +25,7 @@ class TopKSkylineGroupsDominatedGroups:
 
     def get_dominated_groups_of_group(self, group):
         srg = RepresentativeSkylineGraph(self.dsg, group)
-
-        child_groups = srg.graph[group[0]]['children_set']
+        child_groups = srg.graph[group[0]]['children_set'].copy()
         total_dg = 0
 
         for idx_group in range(1, len(group)):
@@ -34,8 +33,8 @@ class TopKSkylineGroupsDominatedGroups:
             for point_child in srg.graph[group[idx_group]]['children_set']:
                 temp_group = []
                 for k in range(len(child_groups)):
-                    if isinstance(child_groups[k][0], tuple):
-                        s = {child_groups[k][0]}
+                    if isinstance(child_groups[k][0], set):
+                        s = child_groups[k][0].copy()
                         total = child_groups[k][1]
                     else:
                         s = {child_groups[k]}
@@ -48,11 +47,12 @@ class TopKSkylineGroupsDominatedGroups:
                         continue
                     temp_group.append((s, total))
 
+                # check if point of temp_group combinations exist in temp_groups
+                # if yes, then remove it
                 temp_group = [x for x in temp_group if not any(
                     [set(y[0]).issubset(set(x[0])) for y in temp_groups])]
                 temp_groups.extend(temp_group)
             child_groups = temp_groups
-
         for cg in child_groups:
             total_dg += cg[1]
         return total_dg-1
@@ -81,7 +81,7 @@ class TopKSkylineGroupsDominatedGroups:
         self.sort_points_in_layer()
 
         new_groups = list(create_subset(
-            self.points_in_layer, self.group_size))
+            self.points_in_layer, -1, self.group_size))
         for group in new_groups:
             self.upper_dominated_groups[group] = self.get_upper_bound_dominated_groups(
                 group)

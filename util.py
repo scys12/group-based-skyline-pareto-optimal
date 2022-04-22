@@ -13,8 +13,12 @@ class KeyWrapper:
         return len(self.it)
 
 
-def create_subset(list, subset_length):
-    return [x for x in combinations(list, subset_length)]
+def create_subset(group, start, subset_length):
+    if subset_length > len(group):
+        subset_length = len(group)
+    if start < 0:
+        return [x for x in combinations(group, subset_length)]
+    return list(chain.from_iterable(combinations(group, r) for r in range(start, len(group)+1)))
 
 
 def reverse_bisort(a, x, lo=0, hi=None):
@@ -58,3 +62,45 @@ class RepresentativeSkylineGraph:
         parents = self.dsg[point].parents
         parent_points = set(group).intersection(set(parents))
         return len(parent_points) == 1
+
+
+class BipartiteGraph:
+    def __init__(self, group_types, group):
+        # group types = aplicants
+        # group = jobs
+        self.group_types = group_types
+        self.group = group
+        self.matrix = [[0] * len(self.group)
+                       for _ in range(len(self.group_types))]
+
+        self.assign_group(self.group_types, self.group)
+
+    def assign_group(self, group_types, group):
+        for idx_gt in range(len(group_types)):
+            for g in group_types[idx_gt]:
+                idx_grp = group.index(g)
+                self.matrix[idx_gt][idx_grp] = 1
+
+
+class MaximumBipartiteMatching:
+    def max_matching(self, graph):
+        len_grp_types = len(graph.group_types)
+        len_group = len(graph.group)
+        assign = [-1] * len_group
+        total_match = 0
+
+        for gt in range(len_grp_types):
+            visited = [False] * len_group
+            if self.bipartite_match(graph, gt, visited, assign):
+                total_match += 1
+        return total_match
+
+    def bipartite_match(self, graph, group_types, visited, assign):
+        for i in range(len(graph.group)):
+            if graph.matrix[group_types][i] == 1 and not visited[i]:
+                visited[i] = True
+                assigned = assign[i]
+                if assigned < 0 or self.bipartite_match(graph, assigned, visited, assign):
+                    assign[i] = group_types
+                    return True
+        return False

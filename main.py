@@ -1,6 +1,6 @@
 from operator import itemgetter
+from counting_algorithm import CountingAlgorithm
 from top_k_group_dominated_groups import TopKSkylineGroupsDominatedGroups
-from util import RepresentativeSkylineGraph
 from top_k_group_dominated_points import TopKSkylineGroupsDominatedPoints
 from skyline_layers import SkylineLayer
 from directed_skyline_graph import SkylineGraph
@@ -44,7 +44,14 @@ if __name__ == "__main__":
 
     print("\n---- Top K Skyline Group Dominated Groups ----")
     topkgp = TopKSkylineGroupsDominatedGroups(
-        skyline_graph.graph, 2, skyline_layer.layers, 2)
+        skyline_graph.graph, 3, skyline_layer.layers, 5)
     topkgp.processing()
     for group in topkgp.skyline_groups:
         print(list(group))
+
+    print("\n---- Counting Algorithm ----")
+    # ctg_alg = CountingAlgorithm(skyline_graph.graph, [(16, 60), (8, 260)], 2)
+    ctg_alg = CountingAlgorithm(
+        skyline_graph.graph, [(20, 180), (16, 60), (8, 260)], 3)
+
+    ctg_alg.processing()
