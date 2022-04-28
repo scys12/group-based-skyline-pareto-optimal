@@ -1,15 +1,22 @@
 class Skyline:
-    @staticmethod
-    def dominate(p1, p2):
-        is_dominated = False
-        count = 0
-        for i in range(len(p1)):
-            if p1[i] <= p2[i]:
-                if p1[i] < p2[i]:
-                    is_dominated = True
-                count += 1
-        return count == len(p1) and is_dominated
+    def __init__(self, point):
+        self.layer = None
+        self.point = tuple(point)
 
-    @staticmethod
-    def group_dominates(g1, g2):
-        return
+    def dominate(self, other):
+        p1 = self.point
+        p2 = other.point
+
+        if len(p1) != len(p2):
+            return False
+
+        for i in range(len(p1)):
+            if p1[i] > p2[i]:
+                return False
+        return True
+
+    def __str__(self):
+        return str({
+            "layer": self.layer,
+            "point": self.point
+        })

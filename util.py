@@ -66,8 +66,6 @@ class RepresentativeSkylineGraph:
 
 class BipartiteGraph:
     def __init__(self, group_types, group):
-        # group types = aplicants
-        # group = jobs
         self.group_types = group_types
         self.group = group
         self.matrix = [[0] * len(self.group)

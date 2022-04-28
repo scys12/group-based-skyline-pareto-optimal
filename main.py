@@ -1,9 +1,10 @@
 from operator import itemgetter
-from counting_algorithm import CountingAlgorithm
+from point_wise import GSkylineGroup as PointWiseGSkylineGroup
+from unit_group_wise import GSkylineGroup as UnitGroupWiseGSkylineGroup
 from top_k_group_dominated_groups import TopKSkylineGroupsDominatedGroups
 from top_k_group_dominated_points import TopKSkylineGroupsDominatedPoints
 from skyline_layers import SkylineLayer
-from directed_skyline_graph import SkylineGraph
+from directed_skyline_graph import DirectedSkylineGraph
 
 points = [
     [4, 400],
@@ -29,15 +30,30 @@ if __name__ == "__main__":
     print(skyline_layer.layers)
 
     print("\n---- Skyline Graph ----")
-    skyline_graph = SkylineGraph(skyline_layer.layers, skyline_layer.max_layer)
+    skyline_graph = DirectedSkylineGraph(
+        skyline_layer.layers, skyline_layer.max_layer)
     skyline_graph.processing()
     for x in skyline_graph.graph:
         print(f"key {x}")
         print(f"val {skyline_graph.graph[x]}")
 
+    print("\n---- Point Wise Algorithm ----")
+    pwa_skyline_groups = PointWiseGSkylineGroup(skyline_graph.graph.copy(), 4)
+    pwa_skyline_groups.processing()
+    for groups_level in pwa_skyline_groups.skyline_groups:
+        for group in groups_level:
+            print(group)
+
+    print("\n---- Unit Group Wise Algorithm ----")
+    ugwa_skyline_groups = UnitGroupWiseGSkylineGroup(
+        skyline_graph.graph.copy(), 4)
+    ugwa_skyline_groups.processing()
+    for group in ugwa_skyline_groups.skyline_groups:
+        print(group)
+
     print("\n---- Top K Skyline Group Dominated Points ----")
     topkgp = TopKSkylineGroupsDominatedPoints(
-        skyline_graph.graph, 2, skyline_layer.layers, 4)
+        skyline_graph.graph, 6, skyline_layer.layers, 10)
     topkgp.processing()
     for group in topkgp.skyline_groups:
         print(list(group))
@@ -48,10 +64,3 @@ if __name__ == "__main__":
     topkgp.processing()
     for group in topkgp.skyline_groups:
         print(list(group))
-
-    print("\n---- Counting Algorithm ----")
-    # ctg_alg = CountingAlgorithm(skyline_graph.graph, [(16, 60), (8, 260)], 2)
-    ctg_alg = CountingAlgorithm(
-        skyline_graph.graph, [(20, 180), (16, 60), (8, 260)], 3)
-
-    ctg_alg.processing()

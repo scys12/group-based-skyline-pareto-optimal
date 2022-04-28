@@ -1,3 +1,4 @@
+from counting_algorithm import CountingAlgorithm
 from util import KeyWrapper, RepresentativeSkylineGraph, create_subset, reverse_bisort
 
 
@@ -14,6 +15,7 @@ class TopKSkylineGroupsDominatedGroups:
         self.k = k
         self.group_flag = []
         self.skyline_groups = None
+        self.ctg_alg = CountingAlgorithm(dsg, group_size)
 
         self.get_all_points_from_layer(self.group_size)
 
@@ -90,8 +92,8 @@ class TopKSkylineGroupsDominatedGroups:
 
         candidate_groups = []
         for i in range(self.k):
-            self.dominated_groups_of_group[new_groups[i]] = self.get_dominated_groups_of_group(
-                new_groups[i])
+            self.dominated_groups_of_group[new_groups[i]] = self.ctg_alg.get_number_of_groups_dominated_group(
+                new_groups[i], self.group_size)
             candidate_groups.append(new_groups[i])
         candidate_groups.sort(
             key=lambda group: self.dominated_groups_of_group[group], reverse=True)
@@ -100,8 +102,8 @@ class TopKSkylineGroupsDominatedGroups:
         new_groups = new_groups[self.k:]
         for group in new_groups:
             if self.upper_dominated_groups[group] > temp:
-                dpg = self.get_dominated_groups_of_group(
-                    group)
+                dpg = self.ctg_alg.get_number_of_groups_dominated_group(
+                    group, self.group_size)
                 if dpg > temp:
                     blidx = reverse_bisort(KeyWrapper(
                         candidate_groups, key=self.dominated_groups_of_group), dpg)

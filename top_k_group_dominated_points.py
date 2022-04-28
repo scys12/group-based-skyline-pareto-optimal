@@ -4,7 +4,6 @@ from util import KeyWrapper, create_subset, reverse_bisort
 class TopKSkylineGroupsDominatedPoints:
     def __init__(self, dsg, group_size, layers, k):
         self.dominated_points_of_group = {}
-        self.children_set = {}
         self.group_size = group_size
         self.dsg = dsg
         self.layers = layers
@@ -60,6 +59,8 @@ class TopKSkylineGroupsDominatedPoints:
             children_set.update(self.get_children_set(point))
 
         child_groups = create_subset(children_set, -1, self.group_size)
+
+        # prune duplicate group from candidate groups
         child_groups = [x for x in child_groups if not any(
             [set(y).issubset(set(x)) for y in candidate_groups])]
 
@@ -67,6 +68,14 @@ class TopKSkylineGroupsDominatedPoints:
             if self.get_dominated_points_of_group(group) > dp_parent_group:
                 child_groups.remove(group)
         return child_groups
+
+    def update_skyline_candidate_groups(self, candidate_groups, dominated_points_of_group, dpg, group, k):
+        blidx = reverse_bisort(KeyWrapper(
+            candidate_groups, key=dominated_points_of_group), dpg)
+        candidate_groups.insert(blidx, group)
+        dominated_points_of_group[group] = dpg
+        del dominated_points_of_group[candidate_groups[k]]
+        return candidate_groups[:k]
 
     def processing(self):
         self.sort_points_of_max_layer()
@@ -93,12 +102,8 @@ class TopKSkylineGroupsDominatedPoints:
                 dpg = self.get_dominated_points_of_group(
                     group)
                 if dpg > temp:
-                    blidx = reverse_bisort(KeyWrapper(
-                        candidate_groups, key=self.dominated_points_of_group), dpg)
-                    candidate_groups.insert(blidx, group)
-                    self.dominated_points_of_group[group] = dpg
-                    del self.dominated_points_of_group[candidate_groups[self.k]]
-                    candidate_groups = candidate_groups[:self.k]
+                    candidate_groups = self.update_skyline_candidate_groups(
+                        candidate_groups, self.dominated_points_of_group, dpg, group, self.k)
                     temp = self.dominated_points_of_group[candidate_groups[self.k-1]]
         g_first = candidate_groups[0]
         dpg_g_first = self.get_dominated_points_of_group(g_first)
@@ -111,12 +116,8 @@ class TopKSkylineGroupsDominatedPoints:
                 if udp > temp:
                     dpg = self.get_dominated_points_of_group(group)
                     if dpg > temp:
-                        blidx = reverse_bisort(KeyWrapper(
-                            candidate_groups, key=self.dominated_points_of_group), dpg)
-                        candidate_groups.insert(blidx, group)
-                        self.dominated_points_of_group[group] = dpg
-                        del self.dominated_points_of_group[candidate_groups[self.k]]
-                        candidate_groups = candidate_groups[:self.k]
+                        candidate_groups = self.update_skyline_candidate_groups(
+                            candidate_groups, self.dominated_points_of_group, dpg, group, self.k)
                         temp = self.dominated_points_of_group[candidate_groups[self.k-1]]
 
             for group in candidate_groups:

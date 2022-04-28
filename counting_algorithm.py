@@ -3,9 +3,8 @@ from collections import Counter
 
 
 class CountingAlgorithm:
-    def __init__(self, dsg, group, group_size):
+    def __init__(self, dsg, group_size):
         self.dsg = dsg
-        self.group = group
         self.group_size = group_size
 
     def build_all_group_types(self, children_set, group):
