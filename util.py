@@ -1,4 +1,8 @@
+from datetime import timedelta
 from itertools import chain, combinations
+import sys
+import time
+from timeit import default_timer as timer
 
 
 class KeyWrapper:
@@ -102,3 +106,71 @@ class MaximumBipartiteMatching:
                     assign[i] = group_types
                     return True
         return False
+
+
+class MaximumBipartiteMatchingGraph:
+    def __init__(self, group_types, group):
+        self.group_types = group_types
+        self.group = group
+        self.matrix = [[] for _ in range(len(self.group_types)+1)]
+
+        self.pairV = [0] * (len(self.group_types)+1)
+        self.pairU = [0] * (len(self.group)+1)
+        self.dist = [-1] * (len(self.group_types)+1)
+
+        self.assign_group(self.group_types, self.group)
+
+    def assign_group(self, group_types, group):
+        for idx_gt in range(len(group_types)):
+            for g in group_types[idx_gt]:
+                idx_grp = group.index(g)
+                self.matrix[idx_gt+1].append(idx_grp+1)
+
+    def max_matching(self):
+        result = 0
+        while self.bfs():
+            for u in range(1, len(self.group_types)+1):
+                if self.pairU[u] == 0 and self.dfs(u):
+                    result += 1
+        return result
+
+    def dfs(self, u):
+        if u != 0:
+            for v in self.matrix[u]:
+                if self.dist[self.pairV[v]] == self.dist[u]+1:
+                    if self.dfs(self.pairV[v]):
+                        self.pairV[v] = u
+                        self.pairU[u] = v
+                        return True
+            self.dist[u] = sys.maxsize
+            return False
+        return True
+
+    def bfs(self):
+        queue = []
+        for u in range(1, len(self.group_types)+1):
+            if self.pairU[u] == 0:
+                self.dist[u] = 0
+                queue.append(u)
+            else:
+                self.dist[u] = sys.maxsize
+
+        self.dist[0] = sys.maxsize
+
+        while len(queue) != 0:
+            u = queue.pop()
+            if (self.dist[u] < self.dist[0]):
+                for v in self.matrix[u]:
+                    if self.dist[self.pairV[v]] == sys.maxsize:
+                        self.dist[self.pairV[v]] = self.dist[u]+1
+                        queue.append(self.pairV[v])
+
+        return self.dist[0] != sys.maxsize
+
+
+def benchmark_time(func):
+    start = timer()
+    func()
+    end = timer()
+    print(f"Time elapsed: {timedelta(seconds=(end-start))} s\n")
+    return end - start

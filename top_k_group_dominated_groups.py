@@ -17,7 +17,7 @@ class TopKSkylineGroupsDominatedGroups:
         self.skyline_groups = None
         self.ctg_alg = CountingAlgorithm(dsg, group_size)
 
-        self.get_all_points_from_layer(self.group_size)
+        self.get_all_points_from_layer(self.dsg, self.group_size)
 
     def get_children_set(self, point_key):
         return self.dsg[point_key].children + [point_key]
@@ -65,25 +65,21 @@ class TopKSkylineGroupsDominatedGroups:
             total *= (self.get_dominated_groups_of_point(point) + 1)
         return total-1
 
-    def get_all_points_from_layer(self, group_size):
-        for layer_index in self.layers:
-            if layer_index > group_size:
-                break
-            self.points_in_layer.extend(self.layers[layer_index])
+    def get_all_points_from_layer(self, dsg, group_size):
+        for point in dsg.keys():
+            unit_group = dsg[point].parents + [point]
+            if len(unit_group) <= group_size:
+                self.points_in_layer.append(point)
 
     def sort_points_in_layer(self):
-        dominated_groups_of_point = {}
-        for point in self.points_in_layer:
-            dominated_groups_of_point[point] = self.get_dominated_groups_of_point(
-                point)
         self.points_in_layer.sort(
-            key=lambda point: dominated_groups_of_point[point], reverse=True)
+            key=lambda point: self.get_dominated_groups_of_point(point), reverse=True)
 
     def processing(self):
         self.sort_points_in_layer()
-
         new_groups = list(create_subset(
             self.points_in_layer, -1, self.group_size))
+        print(len(new_groups))
         for group in new_groups:
             self.upper_dominated_groups[group] = self.get_upper_bound_dominated_groups(
                 group)
@@ -93,17 +89,17 @@ class TopKSkylineGroupsDominatedGroups:
         candidate_groups = []
         for i in range(self.k):
             self.dominated_groups_of_group[new_groups[i]] = self.ctg_alg.get_number_of_groups_dominated_group(
-                new_groups[i], self.group_size)
+                new_groups[i])
             candidate_groups.append(new_groups[i])
         candidate_groups.sort(
             key=lambda group: self.dominated_groups_of_group[group], reverse=True)
         temp = self.dominated_groups_of_group[candidate_groups[self.k-1]]
-
         new_groups = new_groups[self.k:]
         for group in new_groups:
             if self.upper_dominated_groups[group] > temp:
-                dpg = self.ctg_alg.get_number_of_groups_dominated_group(
-                    group, self.group_size)
+                dpg = self.dominated_groups_of_group[group] if group in self.dominated_groups_of_group else self.ctg_alg.get_number_of_groups_dominated_group(
+                    group)
+                print(dpg)
                 if dpg > temp:
                     blidx = reverse_bisort(KeyWrapper(
                         candidate_groups, key=self.dominated_groups_of_group), dpg)

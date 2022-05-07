@@ -1,4 +1,5 @@
 from util import KeyWrapper, create_subset, reverse_bisort
+from math import comb
 
 
 class TopKSkylineGroupsDominatedPoints:
@@ -37,13 +38,15 @@ class TopKSkylineGroupsDominatedPoints:
     def get_maximum_top_k_layer(self):
         total = 0
         idx = 0
-        for l in self.layers.keys():
-            self.points_of_max_layer.extend(self.layers[l])
+        points = []
+        for l in self.layers:
             total += len(self.layers[l])
-            idx += 1
-            if total >= self.k:
+            points.extend(self.layers[l])
+            if comb(total, self.group_size) >= self.k:
                 break
+            idx += 1
         self.number_of_maximum_layer = idx
+        self.points_of_max_layer = points
 
     def sort_points_of_max_layer(self):
         dominated_points_of_point = {}
@@ -79,7 +82,6 @@ class TopKSkylineGroupsDominatedPoints:
 
     def processing(self):
         self.sort_points_of_max_layer()
-
         new_groups = list(create_subset(
             self.points_of_max_layer, -1, self.group_size))
         for group in new_groups:

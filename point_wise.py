@@ -9,9 +9,7 @@ class GSkylineGroup:
 
         def add_tail_sets(self, dsg):
             dsg_keys = list(dsg.keys())
-            for point in dsg_keys:
-                if dsg[point].point_index > self.point_index:
-                    self.tail_sets.add(point)
+            self.tail_sets.update(dsg_keys[self.point_index+1:])
 
         def __str__(self):
             return str({
@@ -72,10 +70,9 @@ class GSkylineGroup:
                     max_layer_group = self.dsg[point].layer_index if max_layer_group < self.dsg[point].layer_index else max_layer_group
                 for point in list(group.tail_sets):
                     if point not in children_set and len(self.dsg[point].parents) != 0:
-                        group.tail_sets.remove(point)
-                    elif self.dsg[point].layer_index - max_layer_group >= 2:
-                        group.tail_sets.remove(point)
-                for point in group.tail_sets:
+                        continue
+                    if self.dsg[point].layer_index - max_layer_group >= 2:
+                        continue
                     candidate_group = group.points.copy()
                     candidate_group.append(point)
                     if self.verificate_g_skyline_group(candidate_group):
@@ -86,6 +83,5 @@ class GSkylineGroup:
                         if len(self.skyline_groups) == i:
                             self.skyline_groups.append([])
                         self.skyline_groups[i].append(sg)
-
         self.append_temp_groups_to_skyline_groups(
             self.group_size, self.temp_groups, self.skyline_groups)
