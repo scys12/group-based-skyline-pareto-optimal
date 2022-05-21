@@ -18,6 +18,8 @@ class DirectedSkylineGraph:
             })
 
     def __init__(self, layers, max_layer):
+        self.keys = []
+        self.values = []
         self.graph = {}
         self.layers = layers
         self.max_layer = max_layer

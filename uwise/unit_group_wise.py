@@ -32,11 +32,11 @@ class GSkylineGroup:
         self.unit_group = {}
         self.skyline_groups = []
         self.temp_groups = []
+        self.create_unit_group(self.dsg)
 
-    def create_unit_group(self):
-        for point_key in list(self.dsg):
-            unit_group_points = self.dsg[point_key].parents + \
-                [point_key]
+    def create_unit_group(self, dsg):
+        for point_key in list(dsg):
+            unit_group_points = self.dsg[point_key].parents + [point_key]
             if len(unit_group_points) >= self.group_size:
                 if len(unit_group_points) == self.group_size:
                     sg = self.SETreeNode([point_key], unit_group_points, self.group_size,
@@ -62,7 +62,6 @@ class GSkylineGroup:
         return len(points) == size
 
     def processing(self):
-        self.create_unit_group()
         root = self.SETreeNode([], [], 0, self.dsg)
         first_level_groups = self.initialize_first_unit_groups(
             self.dsg, self.unit_group)
@@ -88,10 +87,9 @@ class GSkylineGroup:
                     parent_set = set()
                     for ug in candidate_group.unit_groups:
                         parent_set.update(self.dsg[ug].parents)
-                    for ug in list(candidate_group.tail_sets):
-                        if ug in parent_set:
-                            candidate_group.tail_sets.remove(ug)
                     for ug in candidate_group.tail_sets:
+                        if ug in parent_set:
+                            continue
                         new_ug = candidate_group.unit_groups.copy()
                         new_ug.append(ug)
                         new_points = candidate_group.points.copy()

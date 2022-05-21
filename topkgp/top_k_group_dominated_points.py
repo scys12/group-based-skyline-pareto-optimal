@@ -1,3 +1,4 @@
+from util import get_top_points_by_approximate
 from util import KeyWrapper, create_subset, reverse_bisort
 from math import comb
 
@@ -8,13 +9,11 @@ class TopKSkylineGroupsDominatedPoints:
         self.group_size = group_size
         self.dsg = dsg
         self.layers = layers
-        self.number_of_maximum_layer = 0
         self.points_of_max_layer = []
         self.upper_dominated_points = {}
         self.k = k
-        self.group_flag = []
+        self.group_flag = set()
         self.skyline_groups = None
-
         self.get_maximum_top_k_layer()
 
     def get_children_set(self, point_key):
@@ -24,72 +23,72 @@ class TopKSkylineGroupsDominatedPoints:
         return len(self.dsg[point].children)
 
     def get_dominated_points_of_group(self, group):
-        dp = set()
+        if group in self.dominated_points_of_group:
+            return self.dominated_points_of_group[group]
+
+        dominated_points = set()
         for point in group:
-            dp.update(self.get_children_set(point))
-        return len(dp)-self.group_size
+            dominated_points.update(self.get_children_set(point))
+        total = len(dominated_points)-self.group_size
+        return total
 
     def get_upper_bound_dominated_points(self, group):
+        if group in self.upper_dominated_points:
+            return self.upper_dominated_points[group]
+
         total = 0
         for point in group:
             total += self.get_dominated_points_of_point(point)
+        self.upper_dominated_points[group] = total
         return total
 
     def get_maximum_top_k_layer(self):
-        total = 0
-        idx = 0
+        total_points = 0
         points = []
-        for l in self.layers:
-            total += len(self.layers[l])
-            points.extend(self.layers[l])
-            if comb(total, self.group_size) >= self.k:
+        for layer in self.layers:
+            total_points += len(self.layers[layer])
+            points.extend(self.layers[layer])
+            if comb(total_points, self.group_size) >= self.k:
                 break
-            idx += 1
-        self.number_of_maximum_layer = idx
         self.points_of_max_layer = points
 
-    def sort_points_of_max_layer(self):
-        dominated_points_of_point = {}
-        for point in self.points_of_max_layer:
-            dominated_points_of_point[point] = self.get_dominated_points_of_point(
-                point)
+    def get_top_points_of_max_layer(self):
         self.points_of_max_layer.sort(
-            key=lambda point: dominated_points_of_point[point], reverse=True)
+            key=lambda point: self.get_dominated_points_of_point(point), reverse=True)
+        self.points_of_max_layer = get_top_points_by_approximate(
+            self.points_of_max_layer, self.group_size, self.k)
 
-    def create_child_skyline_group(self, candidate_groups, parent_group, dp_parent_group):
+    def create_child_skyline_group(self, candidate_groups, parent_group):
         children_set = set()
+        candidate_groups_set = {frozenset(x) for x in candidate_groups}
         for point in parent_group:
             children_set.update(self.get_children_set(point))
+        children_list = list(children_set)
+        children_list.sort(
+            key=lambda point: self.get_dominated_points_of_point(point), reverse=True)
+        children_list = get_top_points_by_approximate(
+            children_list, self.group_size, self.k)
+        for group in create_subset(children_list, -1, self.group_size):
+            if frozenset(group) not in candidate_groups_set:
+                yield group
 
-        child_groups = create_subset(children_set, -1, self.group_size)
-
-        # prune duplicate group from candidate groups
-        child_groups = [x for x in child_groups if not any(
-            [set(y).issubset(set(x)) for y in candidate_groups])]
-
-        for group in list(child_groups):
-            if self.get_dominated_points_of_group(group) > dp_parent_group:
-                child_groups.remove(group)
-        return child_groups
-
-    def update_skyline_candidate_groups(self, candidate_groups, dominated_points_of_group, dpg, group, k):
+    def update_skyline_candidate_groups(self, candidate_groups, dominated_points_of_group, dpg, group, k, remove_g_first=False):
         blidx = reverse_bisort(KeyWrapper(
             candidate_groups, key=dominated_points_of_group), dpg)
         candidate_groups.insert(blidx, group)
         dominated_points_of_group[group] = dpg
+        if remove_g_first:
+            self.group_flag.discard(frozenset(candidate_groups[k]))
         del dominated_points_of_group[candidate_groups[k]]
-        return candidate_groups[:k]
+        del candidate_groups[k]
+        return candidate_groups
 
     def processing(self):
-        self.sort_points_of_max_layer()
+        self.get_top_points_of_max_layer()
         new_groups = list(create_subset(
             self.points_of_max_layer, -1, self.group_size))
-        for group in new_groups:
-            self.upper_dominated_points[group] = self.get_upper_bound_dominated_points(
-                group)
         new_groups.sort(
-            key=lambda group: self.upper_dominated_points[group], reverse=True)
-
+            key=lambda group: self.get_upper_bound_dominated_points(group), reverse=True)
         candidate_groups = []
         for i in range(self.k):
             self.dominated_points_of_group[new_groups[i]] = self.get_dominated_points_of_group(
@@ -98,8 +97,9 @@ class TopKSkylineGroupsDominatedPoints:
         candidate_groups.sort(
             key=lambda group: self.dominated_points_of_group[group], reverse=True)
         temp = self.dominated_points_of_group[candidate_groups[self.k-1]]
-        new_groups = new_groups[self.k:]
-        for group in new_groups:
+
+        for i in range(self.k, len(new_groups)):
+            group = new_groups[i]
             if self.upper_dominated_points[group] > temp:
                 dpg = self.get_dominated_points_of_group(
                     group)
@@ -107,23 +107,22 @@ class TopKSkylineGroupsDominatedPoints:
                     candidate_groups = self.update_skyline_candidate_groups(
                         candidate_groups, self.dominated_points_of_group, dpg, group, self.k)
                     temp = self.dominated_points_of_group[candidate_groups[self.k-1]]
+
         g_first = candidate_groups[0]
         dpg_g_first = self.get_dominated_points_of_group(g_first)
         while dpg_g_first > temp + 1:
-            self.group_flag.append(g_first)
-            child_groups = self.create_child_skyline_group(
-                candidate_groups, g_first, dpg_g_first)
-            for group in child_groups:
+            self.group_flag.add(frozenset(group))
+            for group in self.create_child_skyline_group(candidate_groups, g_first):
                 udp = self.get_upper_bound_dominated_points(group)
                 if udp > temp:
                     dpg = self.get_dominated_points_of_group(group)
                     if dpg > temp:
                         candidate_groups = self.update_skyline_candidate_groups(
-                            candidate_groups, self.dominated_points_of_group, dpg, group, self.k)
+                            candidate_groups, self.dominated_points_of_group, dpg, group, self.k, True)
                         temp = self.dominated_points_of_group[candidate_groups[self.k-1]]
 
             for group in candidate_groups:
-                if group not in self.group_flag:
+                if frozenset(group) not in self.group_flag:
                     g_first = group
                     dpg_g_first = self.get_dominated_points_of_group(g_first)
                     break
