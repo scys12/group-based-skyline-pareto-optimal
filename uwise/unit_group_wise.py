@@ -1,109 +1,86 @@
+from memory_profiler import profile
+
+
 class GSkylineGroup:
     class SETreeNode:
-        def __init__(self, ug, points, level, dsg, point_index=-1, unit_groups=None):
-            self.unit_groups = ug
-            self.points = set(points)
-            self.level = level
-            self.tail_sets = set()
-            self.tail_set_points = set()
+        def __init__(self, ug, points, parent_set, point_index=-1):
+            self.parent_set = parent_set
             self.point_index = point_index
-            self.add_tail_sets(dsg, unit_groups)
+            self.tail_sets = list()
+            self.unit_groups = ug
+            self.points = points
 
-        def add_tail_sets(self, dsg, unit_groups):
-            dsg_keys = list(reversed(dsg))
-            for point in dsg_keys:
-                if dsg[point].point_index <= self.point_index:
-                    if unit_groups is not None:
-                        self.tail_set_points.update(unit_groups[point])
-                    if dsg[point].point_index < self.point_index:
-                        self.tail_sets.add(point)
+        def get_tail_sets(self, dsg_keys):
+            for i in range(self.point_index-1, -1, -1):
+                yield dsg_keys[i]
+        
+        def get_tail_set_points(self, dsg_keys, unit_groups):
+            tail_set_points = set()
+            for i in range(self.point_index, -1, -1):
+                tail_set_points.update(unit_groups[dsg_keys[i]])
+            return tail_set_points
 
         def __str__(self):
             return str({
                 'points': self.points,
-                'level': self.level,
                 'point_index': self.point_index,
-                'unit_groups': self.unit_groups
+                'unit_groups': self.unit_groups,
+                'tail_sets': self.tail_sets
             })
 
-    def __init__(self, dsg, group_size) -> None:
+    def __init__(self, dsg, group_size):
         self.dsg = dsg
         self.group_size = group_size
         self.unit_group = {}
         self.skyline_groups = []
-        self.temp_groups = []
         self.create_unit_group(self.dsg)
+        self.dsg_keys = list(dsg)
 
     def create_unit_group(self, dsg):
+        removed_dsg = 0
         for point_key in list(dsg):
-            unit_group_points = self.dsg[point_key].parents + [point_key]
+            unit_group_points = set()
+            unit_group_points.update(dsg[point_key].parents)
+            unit_group_points.add(point_key)
+            dsg[point_key].point_index -= removed_dsg
             if len(unit_group_points) >= self.group_size:
                 if len(unit_group_points) == self.group_size:
-                    sg = self.SETreeNode([point_key], unit_group_points, self.group_size,
-                                         self.dsg, self.dsg[point_key].point_index)
-                    self.temp_groups.append(sg)
-                del self.dsg[point_key]
+                    self.skyline_groups.append(unit_group_points)
+                del dsg[point_key]
+                removed_dsg += 1
             else:
                 self.unit_group[point_key] = unit_group_points
 
-    def initialize_first_unit_groups(self, dsg, unit_group):
-        candidate_groups = []
+    def get_first_unit_groups(self, dsg, unit_group):
         for point_key in reversed(dsg):
-            group = self.SETreeNode([point_key], unit_group[point_key], 1,
-                                    dsg, dsg[point_key].point_index, unit_group)
-            candidate_groups.append(group)
-        return candidate_groups
-
-    def verificate_g_skyline_group(self, group):
-        points = set()
-        size = len(group)
-        for point in group:
-            points.update(self.unit_group[point])
-        return len(points) == size
+            group = self.SETreeNode([point_key], unit_group[point_key], set(), dsg[point_key].point_index)
+            yield group
 
     def processing(self):
-        root = self.SETreeNode([], [], 0, self.dsg)
-        first_level_groups = self.initialize_first_unit_groups(
-            self.dsg, self.unit_group)
-
-        for group in first_level_groups:
-            if len(group.tail_set_points) <= self.group_size:
-                if len(group.tail_set_points) == self.group_size:
-                    group.points = group.tail_set_points
-                    new_ug = group.tail_sets.copy()
-                    new_ug.update(group.unit_groups)
-                    group.unit_groups = new_ug
-                    self.temp_groups.append(group)
+        
+        for group in self.get_first_unit_groups(self.dsg, self.unit_group):
+            tail_set_points = group.get_tail_set_points(self.dsg_keys, self.unit_group)
+            if len(tail_set_points) <= self.group_size:
+                if len(tail_set_points) == self.group_size:
+                    yield tail_set_points
                 break
-
-            self.skyline_groups = [
-                [root],
-                [group]
-            ]
-
+            temp_groups = [group]
             i = 2
-            while len(self.skyline_groups[i-1]) > 0 and i <= self.group_size:
-                for candidate_group in list(self.skyline_groups[i-1]):
-                    parent_set = set()
-                    for ug in candidate_group.unit_groups:
-                        parent_set.update(self.dsg[ug].parents)
-                    for ug in candidate_group.tail_sets:
+            while len(temp_groups) > 0 and i <= self.group_size:
+                candidate_groups = []
+                for candidate_group in temp_groups:
+                    parent_set = set(self.dsg[candidate_group.unit_groups[-1]].parents)
+                    parent_set.update(candidate_group.parent_set)
+                    for ug in candidate_group.get_tail_sets(self.dsg_keys):
                         if ug in parent_set:
-                            continue
-                        new_ug = candidate_group.unit_groups.copy()
-                        new_ug.append(ug)
+                            continue                        
                         new_points = candidate_group.points.copy()
                         new_points.update(self.unit_group[ug])
-                        if len(new_ug) == i and len(new_points) <= self.group_size:
-                            if len(self.skyline_groups) == i:
-                                self.skyline_groups.append([])
-                            g = self.SETreeNode(new_ug, new_points, i, self.dsg,
-                                                self.dsg[ug].point_index)
-                            if len(new_points) == self.group_size:
-                                self.temp_groups.append(g)
-                            else:
-                                self.skyline_groups[i].append(g)
-
-                    self.skyline_groups[i-1].remove(candidate_group)
+                        if len(new_points) == self.group_size:
+                                yield new_points
+                        elif len(new_points) < self.group_size:
+                                new_ug = candidate_group.unit_groups + [ug]
+                                g = self.SETreeNode(new_ug, new_points, parent_set, self.dsg[ug].point_index)
+                                candidate_groups.append(g)
+                temp_groups = candidate_groups
                 i += 1
-        self.skyline_groups = self.temp_groups

@@ -138,9 +138,9 @@ def get_top_points_by_approximate(points, group_size, k):
     return points[:total_points]
 
 
-def benchmark_time(func, *args):
+def benchmark_time(func, text, *args):
     start = timer()
-    func(*args)
+    result = func(*args)
     end = timer()
-    print(f"Time elapsed: {timedelta(seconds=(end-start))} s\n")
-    return end - start
+    print(f"{text} Time elapsed: {end-start} s\n")
+    return result, end - start

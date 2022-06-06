@@ -1,5 +1,7 @@
+from itertools import chain
 from operator import itemgetter
 import os
+from more_itertools import ilen
 
 import psutil
 from util import benchmark_time
@@ -15,18 +17,17 @@ from directed_skyline_graph import DirectedSkylineGraph
 def get_user_input():
     try:
         dataset = str(
-            input("Input dataset name (default: hotel_2.txt): \n",) or "hotel_2.txt")
-        if dataset.find("nba") != -1:
-            points = read_nba_dataset(f'data/{dataset}')
-        else:
-            points = read_txt_dataset(f'data/{dataset}')
+            input("Input dataset name (default: hotel_2.txt): \n",) or "inde_2_10000.txt")
+        points = read_txt_dataset(f'data/{dataset}')
+        print(f"Total Points: {len(points)}")
+        points.sort(key=itemgetter(0))
 
         dimensional = len(points[0])
         top_k = 3
 
-        group_size = int(input("Input size of a group (default: 2): \n") or 2)
+        group_size = int(input("Input size of a group (default: 2): \n") or 16)
         algo_name = str(input(
-            "Choose Algorithm: (a)PWA = Point Wise Algorithm, (b)UWA = Unit Group Wise Algorithm, (c)TOPKGP = Top K Skyline Group Dominated Points, (d)TOPKGG = Top K Skyline Group Dominated Points: \n"))
+            "Choose Algorithm: (a)PWA = Point Wise Algorithm, (b)UWA = Unit Group Wise Algorithm, (c)TOPKGP = Top K Skyline Group Dominated Points, (d)TOPKGG = Top K Skyline Group Dominated Points: \n") or "PWA")
 
         method_name = ""
         if algo_name.lower() == "topkgp" or algo_name.lower() == "topkgg":
@@ -41,12 +42,32 @@ def get_user_input():
         print("\nExit Program...")
         exit(0)
 
+def run_unit_wise_algo(ugwa_skyline_groups, top_k):    
+    res = ugwa_skyline_groups.processing()
+    skyline_groups = chain(ugwa_skyline_groups.skyline_groups, res)
+    total = 0
+    for group in skyline_groups:
+        total += 1
+        if total > top_k:
+            continue
+        print(group)
+    print(
+        f"\nTotal G-Skyline Group (size: {group_size}): {total}\n")
+
+def run_point_wise_algo(pwa_skyline_groups, top_k):     
+    res = pwa_skyline_groups.processing()
+    skyline_groups = chain(pwa_skyline_groups.skyline_groups, res)
+    total = 0
+    for group in skyline_groups:
+        total += 1
+        if total > top_k:
+            continue
+        print(group)
+    print(
+        f"\nTotal G-Skyline Group (size: {group_size}): {total}\n")
 
 if __name__ == "__main__":
     points, dimensional, top_k, group_size, algo_name, method_name = get_user_input()
-    print('Memory usage: '+str(psutil.Process(os.getpid()
-                                              ).memory_info().rss / 1024 ** 2)+' mb')
-
     print("\n---- Skyline Layer ----")
     skyline_layer = SkylineLayer(points, dimensional, group_size)
     skyline_layer.processing()
@@ -60,45 +81,27 @@ if __name__ == "__main__":
     print(f"Length Directed Skyline Graph: {len(skyline_graph.graph)}")
 
     if algo_name == "pwa":
-        print("\n---- Point Wise Algorithm ----")
-        pwa_skyline_groups = PointWiseGSkylineGroup(
-            skyline_graph.graph.copy(), group_size)
-        benchmark_time(pwa_skyline_groups.processing)
-        print(
-            f"Total G-Skyline Group (size: {group_size}): {len(pwa_skyline_groups.skyline_groups[group_size])}\n")
-        total = 0
-        for group in pwa_skyline_groups.skyline_groups[group_size]:
-            print(group.points)
-            total += 1
-            if total == top_k:
-                break
+        print("\n---- Point Wise Algorithm ----")   
+        pwa_skyline_groups, _ = benchmark_time(PointWiseGSkylineGroup, "Preprocessing", skyline_graph.graph.copy(), group_size)
+        benchmark_time(run_point_wise_algo, "Processing", pwa_skyline_groups, top_k)
     elif algo_name == "uwa":
         print("\n---- Unit Group Wise Algorithm ----")
-        ugwa_skyline_groups = UnitGroupWiseGSkylineGroup(
-            skyline_graph.graph.copy(), group_size)
-        benchmark_time(ugwa_skyline_groups.processing)
-        print(
-            f"Total G-Skyline Group (size: {group_size}): {len(ugwa_skyline_groups.skyline_groups)}\n")
-        total = 0
-        for group in ugwa_skyline_groups.skyline_groups:
-            print(group.points)
-            total += 1
-            if total == top_k:
-                break
+        ugwa_skyline_groups, _ = benchmark_time(UnitGroupWiseGSkylineGroup, "Preprocessing", skyline_graph.graph.copy(), group_size)
+        benchmark_time(run_unit_wise_algo, "Processing", ugwa_skyline_groups, top_k)
     elif algo_name == "topkgp":
         print("\n---- Top K Skyline Group Dominated Points ----")
         topkgp = TopKSkylineGroupsDominatedPoints(
             skyline_graph.graph, group_size, skyline_layer.layers, top_k)
-        benchmark_time(topkgp.processing)
+        benchmark_time(topkgp.processing, "Processing")
         for group in topkgp.skyline_groups:
             print(list(group))
     elif algo_name == "topkgg":
         print("\n---- Top K Skyline Group Dominated Groups ----")
         topkgp = TopKSkylineGroupsDominatedGroups(
             skyline_graph.graph, group_size, skyline_layer.layers, top_k, method_name.upper())
-        benchmark_time(topkgp.processing)
+        benchmark_time(topkgp.processing, "Processing")
         for group in topkgp.skyline_groups:
             print(list(group))
 
     print('Memory usage: '+str(psutil.Process(os.getpid()
-                                              ).memory_info().rss / 1024 ** 2)+' mb')
+                                                ).memory_info().rss // 1024 ** 2)+' mb')
