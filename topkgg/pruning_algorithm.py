@@ -9,17 +9,18 @@ class PruningAlgorithm:
     def count_total_points_dominated(self, representative_graph, group):
         total = 1
         for point in group:
-            total *= representative_graph.graph[point]['weight']
+            total *= representative_graph.graph[point]["weight"]
         return total
 
     def get_number_of_groups_dominated_group(self, group):
         rsg = RepresentativeSkylineGraph(self.dsg, group)
-        child_groups = [rsg.graph[group[x]]['children_set']
-                        for x in range(len(group))]
+        child_groups = [rsg.graph[group[x]]["children_set"] for x in range(len(group))]
         total_dg = 0
         existing_child_group = set()
         for child_group in product(*child_groups):
-            if len(set(child_group)) == len(group) and frozenset(child_group) not in existing_child_group:
-                existing_child_group.add(frozenset(child_group))
-                total_dg += self.count_total_points_dominated(rsg, child_group)
-        return total_dg-1
+            set_child_group = frozenset(child_group)
+            if len(set_child_group) == len(group):
+                if set_child_group not in existing_child_group:
+                    existing_child_group.add(set_child_group)
+                    total_dg += self.count_total_points_dominated(rsg, child_group)
+        return total_dg - 1

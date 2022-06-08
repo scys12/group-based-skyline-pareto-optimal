@@ -39,7 +39,7 @@ class CountingAlgorithm:
         group_type = [[] for _ in range(self.group_size)]
         count = -1
         for g in group_types_dict:
-            group_type[len(g)-1].append(group_types_dict[g])
+            group_type[len(g) - 1].append(group_types_dict[g])
         for ex_type in self.existing_types:
             is_existing = True
             for i in range(self.group_size):
@@ -61,14 +61,14 @@ class CountingAlgorithm:
             cs = [point] + self.dsg[point].children
             children_set.update(cs)
         group_types = create_subset(group, 1, len(group))
-        group_types_dict = self.build_all_group_types(
-            group_types, children_set, group)
+        group_types_dict = self.build_all_group_types(group_types, children_set, group)
         count, group_type = self.get_existing_group_type(group_types_dict)
         if count == -1:
             count = 0
             for gt in self.group_types:
                 count += self.count_total_points_dominated(
-                    gt, group_types, group_types_dict)
+                    gt, group_types, group_types_dict
+                )
             self.add_to_existing_type(group_type, count)
         return count - 1
 
@@ -81,9 +81,18 @@ class CountingAlgorithm:
 
     def processing_mock_group(self, group, group_size):
         group_subset = create_subset(group, 1, len(group))
-        for group_type in self.construct_group_types_from_subset(group, group_subset, group_size):
+        for group_type in self.construct_group_types_from_subset(
+            group, group_subset, group_size
+        ):
             self.group_types.append(
-                [(group_subset.index(point), group_type.count(point)) for point in set(group_type)])
+                [
+                    (group_subset.index(point), group_type.count(point))
+                    for point in set(group_type)
+                ]
+            )
 
     def construct_group_types_from_subset(self, group, group_subset, group_size):
-        return filterfalse(lambda group_type: not self.is_bipartite(group_type, group), combinations_with_replacement(group_subset, group_size))
+        return filterfalse(
+            lambda group_type: not self.is_bipartite(group_type, group),
+            combinations_with_replacement(group_subset, group_size),
+        )

@@ -16,7 +16,4 @@ class Skyline:
         return True
 
     def __str__(self):
-        return str({
-            "layer": self.layer,
-            "point": self.point
-        })
+        return str({"layer": self.layer, "point": self.point})

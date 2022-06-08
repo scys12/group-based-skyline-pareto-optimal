@@ -1,6 +1,3 @@
-from memory_profiler import profile
-
-
 class GSkylineGroup:
     class SETreeNode:
         def __init__(self, ug, points, parent_set, point_index=-1):
@@ -11,9 +8,9 @@ class GSkylineGroup:
             self.points = points
 
         def get_tail_sets(self, dsg_keys):
-            for i in range(self.point_index-1, -1, -1):
+            for i in range(self.point_index - 1, -1, -1):
                 yield dsg_keys[i]
-        
+
         def get_tail_set_points(self, dsg_keys, unit_groups):
             tail_set_points = set()
             for i in range(self.point_index, -1, -1):
@@ -21,12 +18,14 @@ class GSkylineGroup:
             return tail_set_points
 
         def __str__(self):
-            return str({
-                'points': self.points,
-                'point_index': self.point_index,
-                'unit_groups': self.unit_groups,
-                'tail_sets': self.tail_sets
-            })
+            return str(
+                {
+                    "points": self.points,
+                    "point_index": self.point_index,
+                    "unit_groups": self.unit_groups,
+                    "tail_sets": self.tail_sets,
+                }
+            )
 
     def __init__(self, dsg, group_size):
         self.dsg = dsg
@@ -53,11 +52,12 @@ class GSkylineGroup:
 
     def get_first_unit_groups(self, dsg, unit_group):
         for point_key in reversed(dsg):
-            group = self.SETreeNode([point_key], unit_group[point_key], set(), dsg[point_key].point_index)
+            group = self.SETreeNode(
+                [point_key], unit_group[point_key], set(), dsg[point_key].point_index
+            )
             yield group
 
     def processing(self):
-        
         for group in self.get_first_unit_groups(self.dsg, self.unit_group):
             tail_set_points = group.get_tail_set_points(self.dsg_keys, self.unit_group)
             if len(tail_set_points) <= self.group_size:
@@ -73,14 +73,16 @@ class GSkylineGroup:
                     parent_set.update(candidate_group.parent_set)
                     for ug in candidate_group.get_tail_sets(self.dsg_keys):
                         if ug in parent_set:
-                            continue                        
+                            continue
                         new_points = candidate_group.points.copy()
                         new_points.update(self.unit_group[ug])
                         if len(new_points) == self.group_size:
-                                yield new_points
+                            yield new_points
                         elif len(new_points) < self.group_size:
-                                new_ug = candidate_group.unit_groups + [ug]
-                                g = self.SETreeNode(new_ug, new_points, parent_set, self.dsg[ug].point_index)
-                                candidate_groups.append(g)
+                            new_ug = candidate_group.unit_groups + [ug]
+                            g = self.SETreeNode(
+                                new_ug, new_points, parent_set, self.dsg[ug].point_index
+                            )
+                            candidate_groups.append(g)
                 temp_groups = candidate_groups
                 i += 1
