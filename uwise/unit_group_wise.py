@@ -1,9 +1,8 @@
-class GSkylineGroup:
-    class SETreeNode:
+class UnitGroupWise:
+    class GSkylineGroup:
         def __init__(self, ug, points, parent_set, point_index=-1):
             self.parent_set = parent_set
             self.point_index = point_index
-            self.tail_sets = list()
             self.unit_groups = ug
             self.points = points
 
@@ -16,16 +15,6 @@ class GSkylineGroup:
             for i in range(self.point_index, -1, -1):
                 tail_set_points.update(unit_groups[dsg_keys[i]])
             return tail_set_points
-
-        def __str__(self):
-            return str(
-                {
-                    "points": self.points,
-                    "point_index": self.point_index,
-                    "unit_groups": self.unit_groups,
-                    "tail_sets": self.tail_sets,
-                }
-            )
 
     def __init__(self, dsg, group_size):
         self.dsg = dsg
@@ -52,7 +41,7 @@ class GSkylineGroup:
 
     def get_first_unit_groups(self, dsg, unit_group):
         for point_key in reversed(dsg):
-            group = self.SETreeNode(
+            group = self.GSkylineGroup(
                 [point_key], unit_group[point_key], set(), dsg[point_key].point_index
             )
             yield group
@@ -80,7 +69,7 @@ class GSkylineGroup:
                             yield new_points
                         elif len(new_points) < self.group_size:
                             new_ug = candidate_group.unit_groups + [ug]
-                            g = self.SETreeNode(
+                            g = self.GSkylineGroup(
                                 new_ug, new_points, parent_set, self.dsg[ug].point_index
                             )
                             candidate_groups.append(g)

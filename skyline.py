@@ -14,6 +14,3 @@ class Skyline:
             if p1[i] > p2[i]:
                 return False
         return True
-
-    def __str__(self):
-        return str({"layer": self.layer, "point": self.point})

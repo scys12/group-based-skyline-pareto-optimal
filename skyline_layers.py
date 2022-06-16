@@ -9,7 +9,6 @@ class SkylineLayer:
         for p in points:
             self.points.append(Skyline(p))
         self.points[0].layer = 1
-        self.tail_points = [self.points[0]]
         self.layers = {1: [self.points[0].point]}
         if self.d > 2:
             for i in range(2, self.group_size + 1):
@@ -17,24 +16,25 @@ class SkylineLayer:
         self.max_layer = 1
 
     def processing_two_dimensional_points(self):
+        tail_points = [self.points[0]]
         for i in range(1, len(self.points)):
-            if not self.tail_points[0].dominate(self.points[i]):
+            if not tail_points[0].dominate(self.points[i]):
                 self.points[i].layer = 1
-                self.tail_points[0] = self.points[i]
+                tail_points[0] = self.points[i]
                 self.layers[self.points[i].layer].append(self.points[i].point)
-            elif self.tail_points[self.max_layer - 1].dominate(self.points[i]):
+            elif tail_points[self.max_layer - 1].dominate(self.points[i]):
                 if self.max_layer == self.group_size:
                     continue
                 self.max_layer += 1
                 self.points[i].layer = self.max_layer
-                self.tail_points.append(self.points[i])
+                tail_points.append(self.points[i])
                 self.layers[self.points[i].layer] = [self.points[i].point]
             else:
                 current_layer = self.binary_search_layer(
-                    self.tail_points, self.points[i], 1, self.max_layer - 1
+                    tail_points, self.points[i], 1, self.max_layer - 1
                 )
                 self.points[i].layer = current_layer
-                self.tail_points[current_layer - 1] = self.points[i]
+                tail_points[current_layer - 1] = self.points[i]
                 self.layers[self.points[i].layer].append(self.points[i].point)
 
     def processing_higher_dimensional_points(self):

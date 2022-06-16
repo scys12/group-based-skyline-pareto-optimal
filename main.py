@@ -4,8 +4,8 @@ import os
 import psutil
 from util import benchmark_time
 from dataset import read_txt_dataset
-from pwise.point_wise import GSkylineGroup as PointWiseGSkylineGroup
-from uwise.unit_group_wise import GSkylineGroup as UnitGroupWiseGSkylineGroup
+from pwise.point_wise import PointWise as PointWiseGSkylineGroup
+from uwise.unit_group_wise import UnitGroupWise as UnitGroupWiseGSkylineGroup
 from topkgg.top_k_group_dominated_groups import TopKSkylineGroupsDominatedGroups
 from topkgp.top_k_group_dominated_points import TopKSkylineGroupsDominatedPoints
 from skyline_layers import SkylineLayer
@@ -53,7 +53,7 @@ def get_user_input():
         exit(0)
 
 
-def run_unit_wise_algo(ugwa_skyline_groups, top_k):
+def run_unit_wise_algo(ugwa_skyline_groups, top_k, group_size):
     res = ugwa_skyline_groups.processing()
     skyline_groups = chain(ugwa_skyline_groups.skyline_groups, res)
     total = 0
@@ -65,7 +65,7 @@ def run_unit_wise_algo(ugwa_skyline_groups, top_k):
     print(f"\nTotal G-Skyline Group (size: {group_size}): {total}\n")
 
 
-def run_point_wise_algo(pwa_skyline_groups, top_k):
+def run_point_wise_algo(pwa_skyline_groups, top_k, group_size):
     res = pwa_skyline_groups.processing()
     skyline_groups = chain(pwa_skyline_groups.skyline_groups, res)
     total = 0
@@ -77,8 +77,7 @@ def run_point_wise_algo(pwa_skyline_groups, top_k):
     print(f"\nTotal G-Skyline Group (size: {group_size}): {total}\n")
 
 
-if __name__ == "__main__":
-    points, dimensional, top_k, group_size, algo_name, method_name = get_user_input()
+def processing(points, dimensional, top_k, group_size, algo_name, method_name):
     print("\n---- Skyline Layer ----")
     skyline_layer = SkylineLayer(points, dimensional, group_size)
     skyline_layer.processing()
@@ -100,7 +99,9 @@ if __name__ == "__main__":
             skyline_graph.graph.copy(),
             group_size,
         )
-        benchmark_time(run_point_wise_algo, "Processing", pwa_skyline_groups, top_k)
+        benchmark_time(
+            run_point_wise_algo, "Processing", pwa_skyline_groups, top_k, group_size
+        )
     elif algo_name == "uwa":
         print("\n---- Unit Group Wise Algorithm ----")
         ugwa_skyline_groups, _ = benchmark_time(
@@ -109,7 +110,9 @@ if __name__ == "__main__":
             skyline_graph.graph.copy(),
             group_size,
         )
-        benchmark_time(run_unit_wise_algo, "Processing", ugwa_skyline_groups, top_k)
+        benchmark_time(
+            run_unit_wise_algo, "Processing", ugwa_skyline_groups, top_k, group_size
+        )
     elif algo_name == "topkgp":
         print("\n---- Top K Skyline Group Dominated Points ----")
         topkgp = TopKSkylineGroupsDominatedPoints(
@@ -136,3 +139,7 @@ if __name__ == "__main__":
         + str(psutil.Process(os.getpid()).memory_info().rss // 1024**2)
         + " mb"
     )
+
+
+if __name__ == "__main__":
+    processing(get_user_input())
