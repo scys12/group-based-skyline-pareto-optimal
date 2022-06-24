@@ -1,3 +1,4 @@
+from turtle import position
 from topkgg.pruning_algorithm import PruningAlgorithm
 from topkgg.counting_algorithm import CountingAlgorithm
 from util import (
@@ -14,11 +15,9 @@ class TopKSkylineGroupsDominatedGroups:
 
     def __init__(self, dsg, group_size, layers, k, algo="PA"):
         self.dominated_groups_of_group = {}
-        self.children_set = {}
         self.group_size = group_size
         self.dsg = dsg
         self.layers = layers
-        self.number_of_maximum_layer = 0
         self.points_in_layer = []
         self.upper_dominated_groups = {}
         self.k = k
@@ -32,7 +31,7 @@ class TopKSkylineGroupsDominatedGroups:
         return PruningAlgorithm(self.dsg)
 
     def get_dominated_groups_of_point(self, point):
-        return len(self.dsg[point].children)
+        return len(self.dsg[point]["children"])
 
     def get_dominated_groups_of_group(self, group):
         if group in self.dominated_groups_of_group:
@@ -47,12 +46,13 @@ class TopKSkylineGroupsDominatedGroups:
         total = 1
         for point in group:
             total *= self.get_dominated_groups_of_point(point) + 1
-        self.upper_dominated_groups[group] = total - 1
-        return total - 1
+        total -= 1
+        self.upper_dominated_groups[group] = total
+        return total
 
     def get_all_points_from_dsg(self, dsg, group_size):
         for point in dsg:
-            unit_group_length = len(dsg[point].parents) + 1
+            unit_group_length = len(dsg[point]["parents"]) + 1
             if unit_group_length <= group_size:
                 yield point
 
@@ -87,13 +87,13 @@ class TopKSkylineGroupsDominatedGroups:
             if self.upper_dominated_groups[group] > temp:
                 dominated_group = self.get_dominated_groups_of_group(group)
                 if dominated_group > temp:
-                    candidate_idx = reverse_bisort(
+                    position = reverse_bisort(
                         KeyWrapper(
                             self.skyline_groups, key=self.dominated_groups_of_group
                         ),
                         dominated_group,
                     )
-                    self.skyline_groups.insert(candidate_idx, group)
+                    self.skyline_groups.insert(position, group)
                     self.dominated_groups_of_group[group] = dominated_group
                     del self.dominated_groups_of_group[self.skyline_groups[self.k]]
                     del self.skyline_groups[self.k]

@@ -16,11 +16,11 @@ class TopKSkylineGroupsDominatedPoints:
         self.skyline_groups = []
         self.get_maximum_top_k_layer()
 
-    def get_children_set(self, point_key):
-        return self.dsg[point_key].children + [point_key]
+    def get_children_set(self, point):
+        return self.dsg[point]["children"] + [point]
 
     def get_dominated_points_of_point(self, point):
-        return len(self.dsg[point].children)
+        return len(self.dsg[point]["children"])
 
     def get_dominated_points_of_group(self, group):
         if group in self.dominated_points_of_group:
@@ -82,10 +82,10 @@ class TopKSkylineGroupsDominatedPoints:
         k,
         group_flag=None,
     ):
-        blidx = reverse_bisort(
+        position = reverse_bisort(
             KeyWrapper(candidate_groups, key=dominated_points_of_group), dpg
         )
-        candidate_groups.insert(blidx, group)
+        candidate_groups.insert(position, group)
         dominated_points_of_group[group] = dpg
         if group_flag:
             group_flag.discard(frozenset(candidate_groups[k]))
@@ -128,7 +128,7 @@ class TopKSkylineGroupsDominatedPoints:
         dpg_g_first = self.get_dominated_points_of_group(g_first)
         group_flag = set()
         while dpg_g_first > temp + 1:
-            group_flag.add(frozenset(group))
+            group_flag.add(frozenset(g_first))
             for group in self.create_child_skyline_group(self.skyline_groups, g_first):
                 udp = self.get_upper_bound_dominated_points(group)
                 if udp > temp:

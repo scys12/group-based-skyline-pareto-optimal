@@ -19,10 +19,10 @@ class CountingAlgorithm:
             group_type_set = set(group_type)
             group_types[tuple(group_type_set)] = 0
         for point in children_set:
-            parents = self.dsg[point].parents
-            point_parents = tuple(set(group).intersection(set(parents)))
-            if point_parents in group_types:
-                group_types[point_parents] += 1
+            parents = self.dsg[point]["parents"]
+            parents_points = tuple(set(group).intersection(set(parents)))
+            if parents_points in group_types:
+                group_types[parents_points] += 1
         return group_types
 
     def count_total_points_dominated(self, mock_group, group_types, group_types_dict):
@@ -58,7 +58,7 @@ class CountingAlgorithm:
     def get_number_of_groups_dominated_group(self, group):
         children_set = set()
         for point in group:
-            cs = [point] + self.dsg[point].children
+            cs = [point] + self.dsg[point]["children"]
             children_set.update(cs)
         group_types = create_subset(group, 1, len(group))
         group_types_dict = self.build_all_group_types(group_types, children_set, group)

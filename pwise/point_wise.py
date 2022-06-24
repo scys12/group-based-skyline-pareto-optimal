@@ -20,16 +20,16 @@ class PointWise:
 
     def create_unit_group(self, dsg):
         removed_dsg = 0
-        for point_key in list(dsg):
-            unit_group_points = dsg[point_key]["parents"] + [point_key]
-            dsg[point_key]["point_index"] -= removed_dsg
+        for point in list(dsg):
+            unit_group_points = dsg[point]["parents"] + [point]
+            dsg[point]["point_index"] -= removed_dsg
             if len(unit_group_points) >= self.group_size:
                 if len(unit_group_points) == self.group_size:
                     self.skyline_groups.append(unit_group_points)
-                del dsg[point_key]
+                del dsg[point]
                 removed_dsg += 1
             else:
-                self.unit_group[point_key] = unit_group_points
+                self.unit_group[point] = unit_group_points
 
     def verificate_g_skyline_group(self, group):
         unit_group_set = set()
@@ -39,18 +39,18 @@ class PointWise:
 
     def processing(self):
         root = self.GSkylineGroup([], 0, set())
-        temp_groups = [root]
+        candidate_groups = [root]
         for i in range(1, self.group_size + 1):
-            candidate_groups = []
-            for group in temp_groups:
+            temp_groups = []
+            for group in candidate_groups:
                 children_set = group.children_set
                 max_layer_group = group.max_layer_group
                 group_points = group.points.copy()
-                if len(group.points) > 0:
-                    children_set = set(self.dsg[group.points[-1]]["children"])
+                if len(group_points) > 0:
+                    children_set = set(self.dsg[group_points[-1]]["children"])
                     children_set.update(group.children_set)
                     max_layer_group = max(
-                        self.dsg[group.points[-1]]["layer_index"], group.max_layer_group
+                        self.dsg[group_points[-1]]["layer_index"], max_layer_group
                     )
                 for point in group.get_tail_sets(self.dsg_keys):
                     if (
@@ -60,7 +60,7 @@ class PointWise:
                         continue
                     if self.dsg[point]["layer_index"] - max_layer_group >= 2:
                         break
-                    
+
                     group_points.append(point)
                     if self.verificate_g_skyline_group(group_points):
                         point_index = max(
@@ -75,6 +75,6 @@ class PointWise:
                                 children_set,
                                 point_index,
                             )
-                            candidate_groups.append(sg)
+                            temp_groups.append(sg)
                     group_points.pop()
-            temp_groups = candidate_groups
+            candidate_groups = temp_groups
