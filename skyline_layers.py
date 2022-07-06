@@ -60,6 +60,7 @@ class SkylineLayer:
                 if not flag:
                     self.points[i].layer = j
                     self.layers[self.points[i].layer].append(self.points[i].point)
+                    break
         for layer_idx in list(self.layers):
             if len(self.layers[layer_idx]) == 0:
                 del self.layers[layer_idx]

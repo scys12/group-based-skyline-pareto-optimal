@@ -14,7 +14,7 @@ class TopKSkylineGroupsDominatedPoints:
         self.k = k
         self.group_flag = set()
         self.skyline_groups = []
-        self.get_maximum_top_k_layer()
+        self.get_maximum_points_from_layer()
 
     def get_children_set(self, point):
         return self.dsg[point]["children"] + [point]
@@ -42,7 +42,7 @@ class TopKSkylineGroupsDominatedPoints:
         self.upper_dominated_points[group] = total
         return total
 
-    def get_maximum_top_k_layer(self):
+    def get_maximum_points_from_layer(self):
         self.points_of_max_layer = []
         for layer in self.layers:
             self.points_of_max_layer.extend(self.layers[layer])
