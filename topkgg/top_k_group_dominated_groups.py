@@ -22,6 +22,7 @@ class TopKSkylineGroupsDominatedGroups:
         self.upper_dominated_groups = {}
         self.k = k
         self.skyline_groups = []
+        self.processing_points = []
         self.dominated_group_algo = self.initialize_dominated_group_algo(algo)
         self.get_all_points_from_dsg(self.dsg, self.group_size)
 
@@ -54,19 +55,17 @@ class TopKSkylineGroupsDominatedGroups:
         for point in dsg:
             unit_group_length = len(dsg[point]["parents"]) + 1
             if unit_group_length <= group_size:
-                yield point
+                self.processing_points.append(point)
 
     def sort_points_in_layer(self):
-        points = self.get_all_points_from_dsg(self.dsg, self.group_size)
-        return sorted(
-            points,
-            key=lambda point: self.get_dominated_groups_of_point(point),
-            reverse=True,
+        self.processing_points.sort(
+            key=lambda point: self.get_dominated_groups_of_point(point), reverse=True
         )
 
     def processing(self):
+        self.sort_points_in_layer()
         self.points_in_layer = get_top_points_by_approximate(
-            self.sort_points_in_layer(), self.group_size, self.k
+            self.processing_points, self.group_size, self.k
         )
         new_groups = list(create_subset(self.points_in_layer, -1, self.group_size))
         new_groups.sort(

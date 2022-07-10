@@ -25,10 +25,12 @@ class CountingAlgorithm:
                 point_types_dict[parents_points] += 1
         return point_types_dict
 
-    def count_total_points_dominated(self, mock_group, point_types, point_types_dict):
+    def count_total_points_dominated(
+        self, point_type_occurence, point_types, point_types_dict
+    ):
         total = 1
         values = list(point_types_dict.values())
-        for point_type_mock in mock_group:
+        for point_type_mock in point_type_occurence:
             point_type_val = values[point_type_mock[0]]
             if len(point_types[point_type_mock[0]]) == 1:
                 point_type_val += 1
@@ -38,8 +40,8 @@ class CountingAlgorithm:
     def get_existing_group_type(self, point_types_dict):
         group_type = [[] for _ in range(self.group_size)]
         count = -1
-        for g in point_types_dict:
-            group_type[len(g) - 1].append(point_types_dict[g])
+        for pt in point_types_dict:
+            group_type[len(pt) - 1].append(point_types_dict[pt])
         for ex_type in self.existing_group_types:
             is_existing = True
             for i in range(self.group_size):

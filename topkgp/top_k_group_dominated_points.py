@@ -98,7 +98,6 @@ class TopKSkylineGroupsDominatedPoints:
         new_groups.sort(
             key=lambda group: self.get_upper_bound_dominated_points(group), reverse=True
         )
-
         for i in range(self.k):
             self.dominated_points_of_group[
                 new_groups[i]

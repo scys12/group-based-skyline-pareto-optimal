@@ -60,7 +60,7 @@ class RepresentativeSkylineGraph:
                 else:
                     if child_point not in self.graph:
                         self.graph[child_point] = {"weight": 1, "children_set": []}
-            self.graph[parent_point]["children_set"].append(children_set)
+            self.graph[parent_point]["children_set"] += children_set
 
     def check_point_have_one_parent_in_group(self, dsg, group, point):
         parents = dsg[point]["parents"]
