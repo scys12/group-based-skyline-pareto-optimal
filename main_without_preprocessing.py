@@ -158,13 +158,13 @@ def processing(points, dimensional, top_k, group_size, algo_name, method_name):
         )
         print(f"Prepocessing Time Elapsed: {topkgp_preprocessing_time:f} s\n")
 
-        topkgp_memory = psutil.Process(os.getpid()).memory_info().rss / 1024**2
-        _, topkgp_processing_time = benchmark_time(topkgp.processing)
-        topkgp_memory = (
-            psutil.Process(os.getpid()).memory_info().rss / 1024**2 - topkgp_memory
+        initial_topkgp_memory = (
+            psutil.Process(os.getpid()).memory_info().rss / 1024**2
         )
+        _, topkgp_processing_time = benchmark_time(topkgp.processing)
+        topkgp_memory = psutil.Process(os.getpid()).memory_info().rss / 1024**2
         print(f"Processing Time Elapsed: {(topkgp_processing_time):f} s\n")
-        print(f"Total Memory : {topkgp_memory} MB\n")
+        print(f"Total Memory : {topkgp_memory-initial_topkgp_memory} MB\n")
         for group in topkgp.skyline_groups:
             print(list(group))
 
